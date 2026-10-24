@@ -6,8 +6,8 @@ Public source code for a **small, non-destructive 3D lighting experiment** on Cy
 
 - Imports an existing, textured GLB and preserves its original geometry and PBR materials.
 - Adds separate emerald-green geometry for provisional eye rings, chest accents, and wing light paths.
-- Exports an editable `.blend`, a portable `.glb`, and a machine-readable inspection report.
-- Uses **GitHub Actions CPU** by default; it does **not** rent a GPU or run on a schedule.
+- Exports an editable `.blend`, a portable `.glb`, and a JSON inspection report.
+- Uses **GitHub Actions CPU** by default; it does **not** rent a GPU or run on a schedule. It installs no browsers.
 
 **This is a positioning prototype, not finished recessed under-feather lighting.** Strip placement must be visually reviewed and corrected. Animation of emission is retained in BLEND only; GLB emission is static.
 
@@ -18,8 +18,8 @@ The original textured GLB is ~121 MiB, exceeding GitHub's 100 MB normal Git-file
 1. In this repository, go to **Releases → Draft a new release**.
 2. Set tag `owl-input-01` and attach a **copy** of the textured source file, renamed `cyber-owl-textured.glb`.
 3. Publish the release.
-4. Go to **Actions → Cyber Owl Blender CPU Experiment → Run workflow**.
-5. Check run logs and download artifact `cyber-owl-blender-cpu-v1` from the run.
+4. Go to **Actions → Cyber Owl Blender CPU Experiment → Run workflow**. The workflow first validates the public release GLB, and stops before Blender installation if the asset is missing.
+5. Check run logs and download artifact `cyber-owl-blender-cpu-v2` from the run.
 
 **PUBLIC REPOSITORY WARNING:** Every release asset is publicly accessible. Upload only assets you are comfortable distributing. If the original model is intended to stay private, use a private storage bucket with credentials instead; the supplied release workflow would need adapting.
 
