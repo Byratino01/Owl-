@@ -29,8 +29,8 @@ Workflow is manually dispatched only (`workflow_dispatch`), with a 35-minute tim
 
 ## Directory map
 
-- `scripts/enhance_owl.py` — Blender Python edit.
+- `enhance_owl.py` — Blender Python edit.
 - `.github/workflows/blender-owl.yml` — GitHub Actions workflow.
-- `docs/ASSETS.md` — asset inventory, provenance, limits and follow-up test plan.
+- `ASSETS.md` — asset inventory, provenance, limits and follow-up test plan.
 
 Do not change other repositories. Keep originals separately; all edits happen in fresh workflow directories.
