@@ -1,1 +1,51 @@
+name: Cyber Owl Blender CPU Experiment
+on:
+  workflow_dispatch:
+    inputs:
+      front_sign:
+        description: 'Front direction (-1 or 1)'
+        type: choice
+        required: true
+        default: '-1'
+        options:
+          - '-1'
+          - '1'
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Install Blender
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y blender
+          blender --version | head -n 2
+      - name: Download owl source from public release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p input output
+          gh release download owl-input-01 --repo "$GITHUB_REPOSITORY" --pattern 'cyber-owl-textured.glb' --dir input
+          test -s input/cyber-owl-textured.glb
+      - name: Enhance owl using Blender
+        env:
+          OWL_FRONT_SIGN: ${{ inputs.front_sign }}
+        run: |
+          blender -b -t 2 -P enhance_owl.py -- input/cyber-owl-textured.glb output
+      - name: Validate generated files
+        run: |
+          test -s output/Cyber_Owl_Editable.blend
+          test -s output/Cyber_Owl_LightPaths.glb
+          cat output/inspection.txt
+      - name: Upload outputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: cyber-owl-blender-cpu-v1
+          path: output/
+          retention-days: 7
+          compression-level: 0
 
