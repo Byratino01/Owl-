@@ -3,13 +3,13 @@ on:
   workflow_dispatch:
     inputs:
       front_sign:
-        description: 'Front direction (-1 or 1)'
+        description: "Front direction (-1 or 1)"
         type: choice
         required: true
-        default: '-1'
+        default: "-1"
         options:
-          - '-1'
-          - '1'
+          - "-1"
+          - "1"
 permissions:
   contents: read
 jobs:
@@ -19,33 +19,62 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@v4
-      - name: Install Blender
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y blender
-          blender --version | head -n 2
-      - name: Download owl source from public release
+      - name: Preflight source release before installing Blender
         env:
           GH_TOKEN: ${{ github.token }}
+        shell: bash
         run: |
+          set -euo pipefail
           mkdir -p input output
+          gh release view owl-input-01 --repo "$GITHUB_REPOSITORY" >/dev/null
           gh release download owl-input-01 --repo "$GITHUB_REPOSITORY" --pattern 'cyber-owl-textured.glb' --dir input
           test -s input/cyber-owl-textured.glb
-      - name: Enhance owl using Blender
+          python3 - <<'PY'
+          import os, struct
+          p="input/cyber-owl-textured.glb"
+          with open(p,"rb") as f: header=f.read(12)
+          magic,ver,size=struct.unpack("<4sII",header)
+          assert magic==b"glTF" and ver==2 and size==os.path.getsize(p), "Invalid input GLB header"
+          print("Validated input GLB:",size,"bytes")
+          PY
+      - name: Install Blender without any browser dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends blender
+          blender --version | head -n 2
+          command -v blender
+      - name: Validate Python syntax
+        run: python3 -m py_compile enhance_owl.py
+      - name: Enhance owl using headless Blender
         env:
           OWL_FRONT_SIGN: ${{ inputs.front_sign }}
+        shell: bash
         run: |
+          set -euo pipefail
           blender -b -t 2 -P enhance_owl.py -- input/cyber-owl-textured.glb output
-      - name: Validate generated files
+      - name: Verify outputs and report
+        shell: bash
         run: |
+          set -euo pipefail
           test -s output/Cyber_Owl_Editable.blend
           test -s output/Cyber_Owl_LightPaths.glb
-          cat output/inspection.txt
-      - name: Upload outputs
+          test -s output/inspection.json
+          python3 - <<'PY'
+          import json,os,struct
+          d=json.load(open("output/inspection.json"))
+          assert d["original_meshes"] >= 1
+          assert len(d["created_light_meshes"]) >= 1
+          p="output/Cyber_Owl_LightPaths.glb"
+          with open(p,"rb") as f: magic,v,size=struct.unpack("<4sII",f.read(12))
+          assert magic==b"glTF" and v==2 and size==os.path.getsize(p)
+          print(json.dumps(d,indent=2))
+          PY
+      - name: Upload output artifact
         uses: actions/upload-artifact@v4
         with:
-          name: cyber-owl-blender-cpu-v1
+          name: cyber-owl-blender-cpu-v2
           path: output/
           retention-days: 7
           compression-level: 0
-
